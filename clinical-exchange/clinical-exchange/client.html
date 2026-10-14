@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Clinical Exchange Monitor</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{font-family:system-ui;max-width:640px;margin:2rem auto;padding:0 1rem}
+li{padding:.4rem;border-bottom:1px solid #ddd}.crit{background:#fde2e2;font-weight:600}
+input,button{padding:.4rem;margin:.2rem 0}</style></head><body>
+<h2>Live Patient Monitor</h2>
+<input id="pid" placeholder="Patient ID" size="40"><br>
+<input id="key" value="doctor-key"><button onclick="go()">Subscribe</button>
+<p id="st">Not connected</p><ul id="log"></ul>
+<script>
+function go(){
+  const pid=document.getElementById('pid').value, key=document.getElementById('key').value;
+  const ws=new WebSocket(`${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/${pid}?api_key=${key}`);
+  ws.onopen=()=>st.textContent='Connected - waiting for updates';
+  ws.onclose=()=>st.textContent='Disconnected';
+  ws.onmessage=e=>{const o=JSON.parse(e.data).data;
+    const li=document.createElement('li'); if(o.critical)li.className='crit';
+    const lag=((Date.now()/1000-o.ts)*1000).toFixed(0);
+    li.textContent=`${o.code}: ${o.value} ${o.unit}${o.critical?'  CRITICAL':''}  (${lag} ms)`;
+    log.prepend(li)};
+}
+</script></body></html>
